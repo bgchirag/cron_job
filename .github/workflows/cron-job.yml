@@ -1,0 +1,33 @@
+name: MongoDB → B2 Cloud Cron
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # Every day at 1 AM UTC
+  workflow_dispatch:     # Optional manual trigger
+
+jobs:
+  backup-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run backup script
+        run: node index.js
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          OUTPUT_DIR: ${{ secrets.OUTPUT_DIR }}
+          SOURCE_URI: ${{ secrets.SOURCE_URI }}
+          DEST_URI: ${{ secrets.DEST_URI }}
+          B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
+          B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
+          B2_BUCKET_ID: ${{ secrets.B2_BUCKET_ID }}
