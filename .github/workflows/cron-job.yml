@@ -18,6 +18,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install MongoDB Tools
+        run: |
+          curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server.gpg
+          echo "deb [ signed-by=/usr/share/keyrings/mongodb-server.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+          sudo apt-get update
+          sudo apt-get install -y mongodb-database-tools
+
+
       - name: Install dependencies
         run: npm install
 
