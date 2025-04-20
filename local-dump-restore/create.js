@@ -5,7 +5,7 @@ const execPromise = promisify(exec);
 
 const exportMongoDBCollection = async () => {
   const uri =
-    "mongodb+srv://chiragsbagde:Test123@cluster0.y2bwvnd.mongodb.net/"; // Your MongoDB URI
+    ""; // Your MongoDB URI
   const collectionName = "competitions"; // Replace with your actual collection name
   const outputFile = "./output.json"; // Define where to save the output file
 
