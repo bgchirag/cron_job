@@ -18,6 +18,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install libssl1.1 manually
+        run: |
+          wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openssl1.1/libssl1.1_1.1.1n-0ubuntu5_amd64.deb
+          sudo dpkg -i libssl1.1_1.1.1n-0ubuntu5_amd64.deb
+          sudo apt-get install -f  # Fix any dependencies
+
       - name: Install PostgreSQL 17 tools
         run: |
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ focal-pgdg main 17" > /etc/apt/sources.list.d/pgdg.list'
