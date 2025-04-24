@@ -9,7 +9,7 @@ const { SOURCE_NEON_URI, DEST_NEON_URI } = process.env;
 const PG_DUMP = `"/usr/lib/postgresql/17/bin/pg_dump"`;
 const PG_RESTORE = `"/usr/lib/postgresql/17/bin/pg_restore"`;
 
-const migratePostgres = () => {
+export async function backupPostgres() {
   const dumpFile = path.resolve(`./neon_backup_${Date.now()}.bak`);
   const dumpCommand = `${PG_DUMP} -Fc -v -d "${SOURCE_NEON_URI}" -f "${dumpFile}"`;
 
