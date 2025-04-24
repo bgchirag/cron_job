@@ -1,5 +1,5 @@
 import { dumpDbtoCloud } from "./b2-cloud-restore.js";
-import { backupPostgres } from "./pgBackup.js";
+import { backupPostgres } from "./pg_dump.js";
 import dotenv from "dotenv";
 
 dotenv.config();
