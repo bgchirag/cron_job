@@ -116,12 +116,29 @@ const restoreMongoDB = async (dbName, collectionName, outputDir) => {
         console.error(`❌ Restore failed: ${error.message}`);
         return reject(error);
       }
-      if (stderr) console.warn(`mongorestore stderr: ${stderr}`);
+
+      const lines = stderr.split("\n").filter((line) => {
+        return (
+          !line.includes("duplicate key error") &&
+          !line.includes("restoring to existing collection") &&
+          !line.includes("reading metadata") &&
+          !line.includes("restoring indexes") &&
+          !line.includes("checking for collection data") &&
+          !line.includes("finished restoring") &&
+          !line.includes("document(s) restored")
+        );
+      });
+
+      if (lines.length > 0) {
+        console.warn(`mongorestore warnings:\n${lines.join("\n")}`);
+      }
+
       console.log(`✅ Restored collection: ${collectionName}`);
       resolve();
     });
   });
 };
+
 
 const deleteDumpFiles = (outputDir, dbName, collectionName) => {
   const collectionPath = path.join(outputDir, dbName, `${collectionName}.bson`);

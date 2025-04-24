@@ -27,19 +27,26 @@ export function backupPostgres(SOURCE, TARGET) {
     );
 
     console.log("⏳ Identifying new tables...");
+
     const existing = fs
       .readFileSync(TABLES_TARGET, "utf-8")
       .split("\n")
+      .map((line) => line.trim().toLowerCase())
       .filter(Boolean);
+
     const dumpList = fs
       .readFileSync(TABLES_SOURCE, "utf-8")
       .split("\n")
+      .map((line) => line.trim())
       .filter(Boolean);
 
     const newTableLines = dumpList.filter((line) => {
       const match = line.match(/TABLE\s+public\.(\w+)/);
-      return match && !existing.includes(match[1]);
+      const tableName = match?.[1]?.toLowerCase();
+      return tableName && !existing.includes(tableName);
     });
+
+    console.log(newTableLines.length, "new tables found:", newTableLines);
 
     fs.writeFileSync(NEW_TABLES_FILE, newTableLines.join("\n"));
 
