@@ -1,13 +1,6 @@
-name: Database Backup Cron
-
-on:
-  schedule:
-    - cron: '0 1 * * *' # Every day at 1 AM UTC
-  workflow_dispatch:  # Optional manual trigger
-
 jobs:
   backup-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
@@ -18,11 +11,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install libssl1.1 manually
+      - name: Add Focal security repo and install libssl1.1
         run: |
-          wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openssl1.1/libssl1.1_1.1.1n-0ubuntu5_amd64.deb
-          sudo dpkg -i libssl1.1_1.1.1n-0ubuntu5_amd64.deb
-          sudo apt-get install -f  # Fix any dependencies
+          echo "deb http://security.ubuntu.com/ubuntu focal-security main" | sudo tee /etc/apt/sources.list.d/focal-security.list
+          sudo apt-get update
+          sudo apt-get install -y libssl1.1
 
       - name: Install PostgreSQL 17 tools
         run: |
@@ -51,5 +44,5 @@ jobs:
           B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
           B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
           B2_BUCKET_ID: ${{ secrets.B2_BUCKET_ID }}
-          SOURCE_NEON_URI: ${{ secrets.SOURCE_NEON_URI}}
-          DEST_NEON_URI: ${{ secrets.DEST_NEON_URI}}
+          SOURCE_NEON_URI: ${{ secrets.SOURCE_NEON_URI }}
+          DEST_NEON_URI: ${{ secrets.DEST_NEON_URI }}
