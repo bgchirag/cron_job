@@ -1,3 +1,10 @@
+name: Database Backup Cron
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
 jobs:
   backup-job:
     runs-on: ubuntu-22.04
