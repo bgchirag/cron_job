@@ -1,67 +1,53 @@
-import { execSync } from "child_process";
-import fs from "fs";
+import { exec } from "child_process";
+import dotenv from "dotenv";
+import path from "path";
 
-export function backupPostgres(SOURCE, TARGET) {
-  const TMP_FOLDER = "./tmp";
-  const DUMP_FILE = `${TMP_FOLDER}/backup.dump`;
-  const TABLES_SOURCE = `${TMP_FOLDER}/tables_source.txt`;
-  const TABLES_TARGET = `${TMP_FOLDER}/tables_target.txt`;
-  const NEW_TABLES_FILE = `${TMP_FOLDER}/new_tables.list`;
+dotenv.config();
 
-  if (!fs.existsSync(TMP_FOLDER)) fs.mkdirSync(TMP_FOLDER);
+const { SOURCE_NEON_URI, DEST_NEON_URI } = process.env;
 
-  try {
-    console.log("⏳ Dumping schema...");
-    execSync(
-      `/usr/lib/postgresql/17/bin/pg_dump --format=custom --schema-only "${SOURCE}" -f ${DUMP_FILE}`
-    );
+const PG_DUMP = `"/usr/lib/postgresql/17/bin/pg_dump"`;
+const PG_RESTORE = `"/usr/lib/postgresql/17/bin/pg_restore"`;
 
-    console.log("⏳ Listing tables in SOURCE...");
-    execSync(
-      `/usr/lib/postgresql/17/bin/pg_restore -l ${DUMP_FILE} | grep "TABLE " | grep -v "TABLE DATA" > ${TABLES_SOURCE}`
-    );
+const migratePostgres = () => {
+  const dumpFile = path.resolve(`./neon_backup_${Date.now()}.bak`);
+  const dumpCommand = `${PG_DUMP} -Fc -v -d "${SOURCE_NEON_URI}" -f "${dumpFile}"`;
 
-    console.log("⏳ Listing tables in TARGET...");
-    execSync(
-      `/usr/lib/postgresql/17/bin/psql "${TARGET}" -c "COPY (SELECT tablename FROM pg_tables WHERE schemaname = 'public') TO STDOUT" > ${TABLES_TARGET}`
-    );
-
-    console.log("⏳ Identifying new tables...");
-
-    const existing = fs
-      .readFileSync(TABLES_TARGET, "utf-8")
-      .split("\n")
-      .map((line) => line.trim().toLowerCase())
-      .filter(Boolean);
-
-    const dumpList = fs
-      .readFileSync(TABLES_SOURCE, "utf-8")
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    const newTableLines = dumpList.filter((line) => {
-      const match = line.match(/TABLE\s+public\.(\w+)/);
-      const tableName = match?.[1]?.toLowerCase();
-      return tableName && !existing.includes(tableName);
-    });
-
-    console.log(newTableLines.length, "new tables found:", newTableLines);
-
-    fs.writeFileSync(NEW_TABLES_FILE, newTableLines.join("\n"));
-
-    if (newTableLines.length > 0) {
-      console.log("⏳ Restoring new tables...");
-      execSync(
-        `/usr/lib/postgresql/17/bin/pg_restore -L ${NEW_TABLES_FILE} -d "${TARGET}" ${DUMP_FILE}`,
-        { stdio: "inherit" }
-      );
-      console.log("✅ Restored new tables:", newTableLines.length);
-    } else {
-      console.log("✅ No new tables to restore.");
+  console.log("⏳ Starting dump...");
+  exec(dumpCommand, (err, stdout, stderr) => {
+    if (err) {
+      console.error("❌ Dump failed:", err.message);
+      return;
     }
-  } catch (error) {
-    console.error("❌ Error during PostgreSQL backup process:", error);
-    throw error;
-  }
-}
+
+    console.log("✅ Dump successful:", dumpFile);
+
+    const restoreCommand = `${PG_RESTORE} --clean --if-exists --no-acl --no-owner -v -O -d "${DEST_NEON_URI}" "${dumpFile}"`;
+    console.log("⏳ Starting restore...");
+
+    exec(restoreCommand, (err, stdout, stderr) => {
+      if (err) {
+        console.error("❌ Restore failed:", err.message);
+        return;
+      }
+
+      // Filter out known noisy warnings
+      const filteredStderr = stderr
+        .split("\n")
+        .filter((line) => {
+          return (
+            !line.includes("does not exist") &&
+            !line.includes("WARNING: no privileges could be revoked") &&
+            !line.includes("owner of object")
+          );
+        })
+        .join("\n");
+
+      if (filteredStderr.trim()) {
+        console.warn("⚠️ Restore warnings:\n", filteredStderr);
+      }
+
+      console.log("✅ Restore to Neon completed.");
+    });
+  });
+};
