@@ -13,17 +13,17 @@ export function backupPostgres(SOURCE, TARGET) {
   try {
     console.log("⏳ Dumping schema...");
     execSync(
-      `pg_dump --format=custom --schema-only "${SOURCE}" -f ${DUMP_FILE}`
+      `/usr/lib/postgresql/17/bin/pg_dump --format=custom --schema-only "${SOURCE}" -f ${DUMP_FILE}`
     );
 
     console.log("⏳ Listing tables in SOURCE...");
     execSync(
-      `pg_restore -l ${DUMP_FILE} | grep "TABLE " | grep -v "TABLE DATA" > ${TABLES_SOURCE}`
+      `/usr/lib/postgresql/17/bin/pg_restore -l ${DUMP_FILE} | grep "TABLE " | grep -v "TABLE DATA" > ${TABLES_SOURCE}`
     );
 
     console.log("⏳ Listing tables in TARGET...");
     execSync(
-      `psql "${TARGET}" -c "COPY (SELECT tablename FROM pg_tables WHERE schemaname = 'public') TO STDOUT" > ${TABLES_TARGET}`
+      `/usr/lib/postgresql/17/bin/psql "${TARGET}" -c "COPY (SELECT tablename FROM pg_tables WHERE schemaname = 'public') TO STDOUT" > ${TABLES_TARGET}`
     );
 
     console.log("⏳ Identifying new tables...");
@@ -45,9 +45,10 @@ export function backupPostgres(SOURCE, TARGET) {
 
     if (newTableLines.length > 0) {
       console.log("⏳ Restoring new tables...");
-      execSync(`pg_restore -L ${NEW_TABLES_FILE} -d "${TARGET}" ${DUMP_FILE}`, {
-        stdio: "inherit",
-      });
+      execSync(
+        `/usr/lib/postgresql/17/bin/pg_restore -L ${NEW_TABLES_FILE} -d "${TARGET}" ${DUMP_FILE}`,
+        { stdio: "inherit" }
+      );
       console.log("✅ Restored new tables:", newTableLines.length);
     } else {
       console.log("✅ No new tables to restore.");
