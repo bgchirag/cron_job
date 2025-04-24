@@ -12,10 +12,10 @@ const NEON_TARGET = process.env.DEST_NEON_URI;
 (async () => {
   console.log("⏰ Starting dumpDbtoCloud task");
   try {
-    await dumpDbtoCloud(DB_NAME, OUTPUT_DIR);
+    // await dumpDbtoCloud(DB_NAME, OUTPUT_DIR);
 
     console.log("⏰ Starting PostgreSQL backup task");
-    await backupPostgres(NEON_SOURCE, NEON_TARGET);
+    backupPostgres(NEON_SOURCE, NEON_TARGET);
 
     console.log("✅ Migration, upload, and backup completed successfully.");
   } catch (error) {
