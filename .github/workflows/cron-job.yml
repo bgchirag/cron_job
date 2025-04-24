@@ -1,9 +1,9 @@
-name: MongoDB → B2 Cloud Cron
+name: Database Backup Cron
 
 on:
   schedule:
     - cron: '0 1 * * *' # Every day at 1 AM UTC
-  workflow_dispatch:     # Optional manual trigger
+  workflow_dispatch:  # Optional manual trigger
 
 jobs:
   backup-job:
@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install PostgreSQL Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
       - name: Install MongoDB Tools
         run: |
           curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server.gpg
@@ -25,11 +30,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mongodb-database-tools
 
-
       - name: Install dependencies
         run: npm install
 
-      - name: Run backup script
+      - name: Run backup script (MongoDB and PostgreSQL)
         run: node index.js
         env:
           DB_NAME: ${{ secrets.DB_NAME }}
@@ -39,3 +43,5 @@ jobs:
           B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
           B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
           B2_BUCKET_ID: ${{ secrets.B2_BUCKET_ID }}
+          SOURCE_NEON_URI: ${{ secrets.SOURCE_NEON_URI}}
+          DEST_NEON_URI: ${{ secrets.DEST_NEON_URI}}
